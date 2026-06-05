@@ -1,0 +1,671 @@
+Crie um html: HTMLEOF'
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Delta Admin Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#03050e;--bg2:#060a18;--bg3:#08101f;
+  --card:#080d1e;--inp:#060a16;
+  --a:#00d2ff;--a2:#0077bb;--glow:#00ffff;
+  --tx:#ddeeff;--sub:#4a7aaa;
+  --ok:#00e680;--err:#ff3c5a;--warn:#ffb400;--pur:#c050ff;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{background:var(--bg);color:var(--tx);font-family:'Share Tech Mono',monospace;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,210,255,.012) 2px,rgba(0,210,255,.012) 4px);pointer-events:none;z-index:9998}
+
+/* ── SETUP ── */
+#setup{position:fixed;inset:0;background:var(--bg);z-index:500;overflow-y:auto;padding-bottom:50px}
+#setup.gone{display:none}
+.setup-wrap{padding:16px;max-width:460px;margin:0 auto}
+.brand{text-align:center;padding:32px 0 24px}
+.brand-eye{font-size:32px;margin-bottom:8px}
+.brand-sub{font-size:9px;letter-spacing:5px;color:var(--sub);margin-bottom:4px}
+.brand-name{font-family:'Rajdhani',sans-serif;font-size:30px;font-weight:900;color:var(--a);text-shadow:0 0 24px #00ffff66;letter-spacing:5px}
+.brand-ver{font-size:9px;letter-spacing:3px;color:var(--sub);margin-top:2px}
+.glow-line{height:1px;background:linear-gradient(90deg,transparent,#00d2ff88,transparent);margin:20px 0}
+
+/* ── APP ── */
+#app{display:none;height:100vh;display:none;flex-direction:column}
+#app.on{display:flex}
+
+/* ── HEADER ── */
+.hdr{background:linear-gradient(180deg,#050a18,var(--bg));border-bottom:1px solid #0066aa33;padding:13px 16px 11px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.hdr-left .hs{font-size:9px;letter-spacing:4px;color:var(--sub);margin-bottom:1px}
+.hdr-left .ht{font-family:'Rajdhani',sans-serif;font-size:21px;font-weight:900;color:var(--a);text-shadow:0 0 16px #00ffff66;letter-spacing:3px}
+.hdr-badge{display:flex;align-items:center;gap:7px;background:var(--card);border:1px solid #0a1830;border-radius:20px;padding:7px 13px;font-size:10px;letter-spacing:1px;cursor:pointer;transition:border .2s}
+.hdr-badge:active{border-color:var(--a)}
+.sdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sdot.online{background:var(--ok);box-shadow:0 0 8px var(--ok);animation:pd 2s infinite}
+.sdot.offline{background:var(--err);box-shadow:0 0 8px var(--err)}
+.sdot.updating{background:var(--warn);box-shadow:0 0 8px var(--warn);animation:pd 1s infinite}
+.sdot.maintenance{background:var(--pur);box-shadow:0 0 8px var(--pur)}
+@keyframes pd{0%,100%{opacity:1}50%{opacity:.25}}
+
+/* ── SCROLL CONTENT ── */
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+
+/* ── PAGES ── */
+.pg{display:none;padding:14px 14px 90px;max-width:460px;margin:0 auto}
+.pg.on{display:block}
+
+/* ── BOTTOM NAV ── */
+.bnav{background:var(--bg2);border-top:1px solid #0066aa33;display:flex;flex-shrink:0;padding:6px 0 max(6px,env(safe-area-inset-bottom))}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;cursor:pointer;color:var(--sub);font-size:8px;letter-spacing:1px;text-transform:uppercase;border:none;background:none;font-family:'Share Tech Mono',monospace;transition:color .2s;-webkit-appearance:none}
+.ni .ico{font-size:21px;line-height:1;transition:filter .2s}
+.ni.on{color:var(--a)}
+.ni.on .ico{filter:drop-shadow(0 0 6px #00d2ffcc)}
+
+/* ── CARD ── */
+.card{background:var(--card);border:1px solid #0066aa2e;border-radius:14px;padding:16px;margin-bottom:12px}
+.card-t{font-size:9px;letter-spacing:4px;color:var(--sub);text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--a);box-shadow:0 0 8px var(--glow);flex-shrink:0;display:inline-block}
+.dot.ok{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.dot.err{background:var(--err);box-shadow:0 0 8px var(--err)}
+.dot.warn{background:var(--warn);box-shadow:0 0 8px var(--warn)}
+
+/* ── STATS ── */
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.scard{background:var(--card);border:1px solid #0066aa2e;border-radius:12px;padding:14px 10px;text-align:center}
+.snum{font-family:'Rajdhani',sans-serif;font-size:34px;font-weight:900;line-height:1;margin-bottom:4px}
+.slbl{font-size:8px;letter-spacing:3px;color:var(--sub);text-transform:uppercase}
+
+/* ── BIG STATUS ── */
+.big-st{border-radius:14px;padding:18px 16px;margin-bottom:12px;text-align:center;border:2px solid;transition:all .4s}
+.big-st.online{border-color:var(--ok);background:rgba(0,230,128,.07)}
+.big-st.offline{border-color:var(--err);background:rgba(255,60,90,.07)}
+.big-st.updating{border-color:var(--warn);background:rgba(255,180,0,.07)}
+.big-st.maintenance{border-color:var(--pur);background:rgba(192,80,255,.07)}
+.bsi{font-size:36px;margin-bottom:8px}
+.bst{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:900;letter-spacing:4px;margin-bottom:4px}
+.bsm{font-size:11px;color:var(--sub);letter-spacing:1px}
+
+/* ── STATUS BUTTONS ── */
+.stgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.stbtn{padding:16px 8px;border-radius:12px;border:2px solid;cursor:pointer;text-align:center;font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;font-weight:bold;background:transparent;transition:all .2s;-webkit-appearance:none}
+.stbtn .si{font-size:22px;display:block;margin-bottom:5px}
+.stbtn:active{transform:scale(.95)}
+.stbtn.online{border-color:rgba(0,230,128,.3);color:var(--ok)}
+.stbtn.online.cur{background:rgba(0,230,128,.12);border-color:var(--ok);box-shadow:0 0 20px rgba(0,230,128,.25)}
+.stbtn.offline{border-color:rgba(255,60,90,.3);color:var(--err)}
+.stbtn.offline.cur{background:rgba(255,60,90,.12);border-color:var(--err);box-shadow:0 0 20px rgba(255,60,90,.25)}
+.stbtn.updating{border-color:rgba(255,180,0,.3);color:var(--warn)}
+.stbtn.updating.cur{background:rgba(255,180,0,.12);border-color:var(--warn);box-shadow:0 0 20px rgba(255,180,0,.25)}
+.stbtn.maintenance{border-color:rgba(192,80,255,.3);color:var(--pur)}
+.stbtn.maintenance.cur{background:rgba(192,80,255,.12);border-color:var(--pur);box-shadow:0 0 20px rgba(192,80,255,.25)}
+
+/* ── INPUTS ── */
+label{font-size:9px;letter-spacing:3px;color:var(--sub);text-transform:uppercase;display:block;margin-bottom:6px}
+input[type=text],input[type=password],textarea,select{width:100%;background:var(--inp);border:1px solid #0066aa44;border-radius:8px;color:var(--tx);font-size:12px;padding:11px 14px;outline:none;font-family:'Share Tech Mono',monospace;margin-bottom:12px;transition:border .2s;-webkit-appearance:none;appearance:none}
+input:focus,textarea:focus,select:focus{border-color:var(--a);box-shadow:0 0 0 2px #00d2ff1a}
+textarea{resize:vertical;min-height:80px}
+select option{background:#080c1a}
+
+/* ── BUTTONS ── */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border-radius:10px;font-family:'Share Tech Mono',monospace;font-weight:bold;background:linear-gradient(135deg,var(--a2),#003366);color:var(--a);border:1px solid #00d2ff33;transition:all .15s;margin-bottom:10px;-webkit-appearance:none}
+.btn:active{opacity:.7;transform:scale(.98)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.g{background:linear-gradient(135deg,#003322,#001a11);color:var(--ok);border-color:#00e68033}
+.btn.r{background:linear-gradient(135deg,#300010,#180008);color:var(--err);border-color:#ff3c5a33}
+.btn.y{background:linear-gradient(135deg,#281600,#140b00);color:var(--warn);border-color:#ffb40033}
+.btn.sm{width:auto;padding:7px 12px;font-size:9px;letter-spacing:1px;margin:0;border-radius:7px}
+.btn.last{margin-bottom:0}
+
+/* ── PILLS ── */
+.pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.pill{padding:7px 10px;font-size:9px;font-family:'Share Tech Mono',monospace;cursor:pointer;border-radius:6px;border:1px solid #0066aa2e;background:#050810;color:var(--sub);transition:all .15s}
+.pill.on{background:rgba(0,230,128,.12);color:var(--ok);border-color:#00e68044}
+.pill:active{transform:scale(.94)}
+
+/* ── KEY ROW ── */
+.kr{background:#050810;border:1px solid #0066aa1e;border-radius:10px;padding:12px;margin-bottom:8px;transition:border .2s}
+.kr.exp{border-color:#ff3c5a1e}
+.kr-top{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.ktext{flex:1;font-size:11px;color:var(--a);letter-spacing:1.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ktext.exp{color:var(--err)}
+.kmeta{display:flex;gap:5px;flex-wrap:wrap}
+.kb{font-size:8px;letter-spacing:1px;padding:3px 7px;border-radius:5px;text-transform:uppercase;white-space:nowrap}
+.kb.t{background:rgba(0,230,128,.1);color:var(--ok)}
+.kb.e{background:rgba(255,60,90,.1);color:var(--err)}
+.kb.d{background:rgba(0,136,204,.1);color:var(--a)}
+.kb.b{background:rgba(255,180,0,.1);color:var(--warn)}
+.kb.l{background:rgba(192,80,255,.1);color:var(--pur)}
+.kb.free{background:rgba(100,100,100,.08);color:var(--sub)}
+.kact{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.bind-row{display:flex;gap:6px;align-items:center;margin-top:8px}
+.bind-row input{flex:1;margin-bottom:0;font-size:11px}
+
+/* ── ALERTS ── */
+.alert{border-radius:8px;padding:10px 12px;font-size:10px;letter-spacing:1px;margin-bottom:12px;line-height:1.6}
+.alert.ok{background:rgba(0,230,128,.07);border:1px solid #00e68033;color:var(--ok)}
+.alert.warn{background:rgba(255,180,0,.07);border:1px solid #ffb40033;color:var(--warn)}
+.alert.err{background:rgba(255,60,90,.07);border:1px solid #ff3c5a33;color:var(--err)}
+.alert.info{background:rgba(0,136,204,.07);border:1px solid #0088cc33;color:var(--a)}
+
+/* ── CODE BOX ── */
+.code{background:#020408;border:1px solid #0066aa2e;border-radius:8px;padding:12px 14px;font-size:10px;color:#5aaa6a;word-break:break-all;line-height:1.7;margin-bottom:10px;font-family:'Share Tech Mono',monospace;white-space:pre-wrap}
+
+/* ── DIVIDER ── */
+.div{height:1px;background:linear-gradient(90deg,transparent,#0066aa44,transparent);margin:12px 0}
+
+/* ── STEP ── */
+.step{display:flex;gap:10px;margin-bottom:12px;align-items:flex-start}
+.sn{min-width:22px;height:22px;border-radius:50%;background:rgba(0,102,170,.2);color:var(--a);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;border:1px solid #0066aa44;flex-shrink:0}
+.st{font-size:11px;color:var(--sub);line-height:1.6;padding-top:2px}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(24px);background:var(--card);border:1px solid #00e68066;color:var(--ok);padding:10px 22px;border-radius:8px;font-size:10px;letter-spacing:1px;z-index:9999;white-space:nowrap;opacity:0;transition:all .3s;pointer-events:none}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.e{border-color:#ff3c5a66;color:var(--err)}
+
+/* ── SPINNER ── */
+.spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(0,210,255,.3);border-top-color:var(--a);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ── INFO ROW ── */
+.irow{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #0a1830}
+.irow:last-child{border-bottom:none;padding-bottom:0}
+.ik{font-size:10px;color:var(--sub);letter-spacing:1px}
+.iv{font-size:11px;color:var(--tx);font-weight:bold}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     SETUP OVERLAY
+══════════════════════════════════════ -->
+<div id="setup">
+<div class="setup-wrap">
+  <div class="brand">
+    <div class="brand-eye">◈</div>
+    <div class="brand-sub">NEXUS SYSTEM</div>
+    <div class="brand-name">DELTA PANEL</div>
+    <div class="brand-ver">ADMIN CONTROL v11</div>
+  </div>
+  <div class="glow-line"></div>
+
+  <!-- Config card -->
+  <div class="card">
+    <div class="card-t"><span class="dot"></span> CONFIGURAÇÃO</div>
+    <div id="saved-ok" class="alert ok" style="display:none">✅ CREDENCIAIS SALVAS — CAMPOS JÁ PREENCHIDOS</div>
+    <label>🔐 GITHUB TOKEN</label>
+    <input type="password" id="i-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+    <label>📁 GIST ID</label>
+    <input type="text" id="i-gist" placeholder="d7007842b5e723e64913482c9ab43dec" style="margin-bottom:16px">
+    <button class="btn" id="btn-con" onclick="doConnect()">⚡ ENTRAR NO PAINEL</button>
+    <button class="btn r last" id="btn-clr" style="display:none" onclick="doClear()">🗑 APAGAR CREDENCIAIS</button>
+  </div>
+
+  <!-- New JSON format -->
+  <div class="card">
+    <div class="card-t"><span class="dot warn"></span> ⚠️ PASSO 1 — ATUALIZAR GIST (FAZER 1 VEZ)</div>
+    <div class="alert warn" style="margin-bottom:10px">Você precisa atualizar o conteúdo do seu Gist para o novo formato antes de conectar. Faça isso apenas uma vez!</div>
+    <p style="font-size:11px;color:var(--sub);margin-bottom:10px;line-height:1.6">Acesse <strong style="color:var(--tx)">gist.github.com</strong> → clique no seu <strong style="color:var(--tx)">keys.json</strong> → ✏️ editar → apague tudo e cole isso:</p>
+    <div class="code" id="new-json">{
+  "config": {
+    "status": "online",
+    "status_message": "Sistema Online!",
+    "version": "v11.0",
+    "update_notes": ""
+  },
+  "keys": []
+}</div>
+    <button class="btn last" onclick="cp('new-json')">📋 COPIAR NOVO FORMATO</button>
+  </div>
+
+  <!-- Step by step -->
+  <div class="card">
+    <div class="card-t"><span class="dot"></span> COMO OBTER O TOKEN</div>
+    <div class="step"><div class="sn">1</div><div class="st">Acesse <strong>github.com</strong> → Toque na sua foto → <strong>Settings</strong></div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Role até o fim → <strong>Developer settings</strong></div></div>
+    <div class="step"><div class="sn">3</div><div class="st"><strong>Personal access tokens → Tokens (classic)</strong></div></div>
+    <div class="step"><div class="sn">4</div><div class="st"><strong>Generate new token (classic)</strong> → Note: <code>delta</code> | Expiration: <strong>No expiration</strong></div></div>
+    <div class="step"><div class="sn">5</div><div class="st">Role e marque ✅ <strong>gist</strong> → <strong>Generate token</strong></div></div>
+    <div class="step"><div class="sn">6</div><div class="st">Copie o <strong style="color:var(--a)">ghp_...</strong> e cole no campo TOKEN acima</div></div>
+  </div>
+
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MAIN APP
+══════════════════════════════════════ -->
+<div id="app">
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <div class="hdr-left">
+      <div class="hs">◈ NEXUS SYSTEM</div>
+      <div class="ht">DELTA PANEL</div>
+    </div>
+    <div class="hdr-badge" onclick="doClear()">
+      <div class="sdot online" id="hdr-dot"></div>
+      <span id="hdr-st">ONLINE</span>
+    </div>
+  </div>
+
+  <!-- SCROLL WRAPPER -->
+  <div class="scroll">
+
+    <!-- ── DASHBOARD ── -->
+    <div class="pg on" id="pg-dash">
+
+      <div class="big-st online" id="dash-big">
+        <div class="bsi" id="dash-ico">🟢</div>
+        <div class="bst" id="dash-stxt">ONLINE</div>
+        <div class="bsm" id="dash-smsg">Sistema funcionando!</div>
+      </div>
+
+      <div class="sgrid">
+        <div class="scard"><div class="snum" style="color:var(--a)" id="s-tot">0</div><div class="slbl">Total Keys</div></div>
+        <div class="scard"><div class="snum" style="color:var(--ok)" id="s-act">0</div><div class="slbl">Ativas</div></div>
+        <div class="scard"><div class="snum" style="color:var(--err)" id="s-exp">0</div><div class="slbl">Expiradas</div></div>
+        <div class="scard"><div class="snum" style="color:var(--warn)" id="s-bnd">0</div><div class="slbl">Vinculadas</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-t"><span class="dot"></span> AÇÕES RÁPIDAS</div>
+        <button class="btn g" onclick="goPg('pg-keys')">⚡ GERAR NOVA KEY</button>
+        <button class="btn" onclick="goPg('pg-status')">🔄 ALTERAR STATUS DO SCRIPT</button>
+        <button class="btn r last" onclick="purgeExp()">🗑 LIMPAR KEYS EXPIRADAS</button>
+      </div>
+
+      <div class="card">
+        <div class="card-t"><span class="dot"></span> INFORMAÇÕES DO SISTEMA</div>
+        <div class="irow"><span class="ik">VERSÃO</span><span class="iv" id="info-ver">v11.0</span></div>
+        <div class="irow"><span class="ik">TOTAL DE KEYS</span><span class="iv" id="info-total">0</span></div>
+        <div class="irow" style="border-bottom:none;padding-bottom:0;display:block">
+          <span class="ik" style="display:block;margin-bottom:8px">URL DO GIST (para o script)</span>
+          <div class="code" id="raw-url" style="margin-bottom:8px">–</div>
+          <button class="btn sm last" style="width:100%" onclick="cpTxt(document.getElementById('raw-url').textContent.trim())">📋 COPIAR URL</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-t"><span class="dot err"></span> CONTA</div>
+        <button class="btn r last" onclick="doClear()">🚪 TROCAR CONTA / DESLOGAR</button>
+      </div>
+
+    </div>
+
+    <!-- ── STATUS ── -->
+    <div class="pg" id="pg-status">
+
+      <div class="card">
+        <div class="card-t"><span class="dot"></span> ESTADO DO SISTEMA</div>
+        <div class="stgrid">
+          <button class="stbtn online" id="stb-online" onclick="selSt('online')"><span class="si">🟢</span>ONLINE</button>
+          <button class="stbtn offline" id="stb-offline" onclick="selSt('offline')"><span class="si">🔴</span>OFFLINE</button>
+          <button class="stbtn updating" id="stb-updating" onclick="selSt('updating')"><span class="si">🟡</span>ATUALIZANDO</button>
+          <button class="stbtn maintenance" id="stb-maintenance" onclick="selSt('maintenance')"><span class="si">🟣</span>MANUTENÇÃO</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-t"><span class="dot"></span> MENSAGEM E VERSÃO</div>
+        <label>📢 MENSAGEM (aparece no script)</label>
+        <input type="text" id="i-msg" placeholder="Ex: Sistema Online! Tudo funcionando.">
+        <label>🏷️ VERSÃO DO SCRIPT</label>
+        <input type="text" id="i-ver" placeholder="Ex: v11.0">
+        <label>📋 NOTAS DE ATUALIZAÇÃO</label>
+        <textarea id="i-notes" placeholder="Descreva as novidades desta versão..."></textarea>
+        <button class="btn g last" id="btn-savest" onclick="saveStatus()">💾 SALVAR CONFIGURAÇÕES</button>
+      </div>
+
+      <div class="card">
+        <div class="card-t"><span class="dot warn"></span> O QUE CADA STATUS FAZ</div>
+        <div class="step"><div style="font-size:16px;flex-shrink:0">🟢</div><div class="st"><strong style="color:var(--ok)">Online</strong> — Script funciona normalmente</div></div>
+        <div class="step"><div style="font-size:16px;flex-shrink:0">🔴</div><div class="st"><strong style="color:var(--err)">Offline</strong> — Script bloqueia e mostra mensagem</div></div>
+        <div class="step"><div style="font-size:16px;flex-shrink:0">🟡</div><div class="st"><strong style="color:var(--warn)">Atualizando</strong> — Script bloqueia e exibe nota de atualização</div></div>
+        <div class="step" style="margin-bottom:0"><div style="font-size:16px;flex-shrink:0">🟣</div><div class="st"><strong style="color:var(--pur)">Manutenção</strong> — Script bloqueia com aviso de manutenção</div></div>
+      </div>
+
+    </div>
+
+    <!-- ── KEYS ── -->
+    <div class="pg" id="pg-keys">
+
+      <!-- Generate -->
+      <div class="card">
+        <div class="card-t"><span class="dot ok"></span> GERAR NOVA KEY</div>
+
+        <label>⏱ DURAÇÃO</label>
+        <div class="pills" id="dpills">
+          <div class="pill" data-s="3600" data-l="1 Hora">1 Hora</div>
+          <div class="pill" data-s="86400" data-l="24 Horas">24 Horas</div>
+          <div class="pill" data-s="604800" data-l="7 Dias">7 Dias</div>
+          <div class="pill on" data-s="2592000" data-l="30 Dias">30 Dias</div>
+          <div class="pill" data-s="0" data-l="Vitalício">Vitalício ♾</div>
+        </div>
+
+        <label>🏷️ LABEL (opcional — ex: "VIP João")</label>
+        <input type="text" id="i-label" placeholder="Nome ou identificação da key...">
+
+        <label>🔒 VINCULAR A ROBLOX USER ID (opcional)</label>
+        <div class="alert info" style="margin-bottom:8px;font-size:10px">
+          Se preencher, só o jogador com esse ID poderá usar. Deixe vazio para qualquer pessoa.
+        </div>
+        <input type="text" id="i-bind" placeholder="Ex: 123456789 (User ID do Roblox)">
+
+        <button class="btn g last" id="btn-gen" onclick="doGen()">⚡ GERAR KEY</button>
+      </div>
+
+      <!-- List -->
+      <div class="card">
+        <div class="card-t"><span class="dot"></span> KEYS <span id="kcount" style="margin-left:4px">(0)</span></div>
+        <div id="klist"><div style="text-align:center;color:var(--sub);font-size:11px;padding:22px 0;letter-spacing:1px">Nenhuma key. Gere uma acima.</div></div>
+      </div>
+
+    </div>
+
+  </div><!-- /scroll -->
+
+  <!-- BOTTOM NAV -->
+  <div class="bnav">
+    <button class="ni on" id="ni-d" onclick="goPg('pg-dash')"><span class="ico">📊</span>Dashboard</button>
+    <button class="ni" id="ni-s" onclick="goPg('pg-status')"><span class="ico">📡</span>Status</button>
+    <button class="ni" id="ni-k" onclick="goPg('pg-keys')"><span class="ico">🔑</span>Keys</button>
+  </div>
+
+</div><!-- /app -->
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ══════════════════════
+//  STATE
+// ══════════════════════
+let TOK  = localStorage.getItem('dp_t') || '';
+let GIST = localStorage.getItem('dp_g') || '';
+let OWN  = localStorage.getItem('dp_o') || '';
+let DATA = { config:{ status:'online', status_message:'', version:'v11.0', update_notes:'' }, keys:[] };
+let SEL  = { secs:2592000, label:'30 Dias' };
+let CUR_ST = 'online';
+
+// ══════════════════════
+//  BOOT
+// ══════════════════════
+(function boot(){
+  if(TOK){ document.getElementById('i-token').value = TOK }
+  if(GIST){ document.getElementById('i-gist').value = GIST }
+  if(TOK && GIST){
+    document.getElementById('saved-ok').style.display='block';
+    document.getElementById('btn-clr').style.display='block';
+  }
+  // pills
+  document.querySelectorAll('#dpills .pill').forEach(p=>{
+    p.addEventListener('click',()=>{
+      document.querySelectorAll('#dpills .pill').forEach(x=>x.classList.remove('on'));
+      p.classList.add('on');
+      SEL={secs:parseInt(p.dataset.s),label:p.dataset.l};
+    });
+  });
+})();
+
+// ══════════════════════
+//  TOAST
+// ══════════════════════
+let tT;
+function toast(m,err=false){
+  const t=document.getElementById('toast');
+  t.textContent=m; t.className='show'+(err?' e':'');
+  clearTimeout(tT); tT=setTimeout(()=>t.className='',2800);
+}
+
+// ══════════════════════
+//  COPY
+// ══════════════════════
+function cp(id){ cpTxt(document.getElementById(id).textContent.trim()); }
+function cpTxt(t){ navigator.clipboard.writeText(t).then(()=>toast('📋 Copiado!')); }
+
+// ══════════════════════
+//  NAV
+// ══════════════════════
+function goPg(id){
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));
+  document.getElementById(id)?.classList.add('on');
+  const m={'pg-dash':'ni-d','pg-status':'ni-s','pg-keys':'ni-k'};
+  if(m[id]) document.getElementById(m[id])?.classList.add('on');
+  document.querySelector('.scroll')?.scrollTo(0,0);
+}
+
+// ══════════════════════
+//  CONNECT
+// ══════════════════════
+async function doConnect(){
+  TOK  = document.getElementById('i-token').value.trim();
+  GIST = document.getElementById('i-gist').value.trim();
+  if(!TOK||!GIST){ toast('Preencha os dois campos!',true); return; }
+  setBtnLoad('btn-con','⏳ CONECTANDO...',true);
+  try{
+    const r=await fetch(`https://api.github.com/gists/${GIST}`,{
+      headers:{Authorization:`token ${TOK}`,Accept:'application/vnd.github.v3+json'}
+    });
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    OWN=d.owner?.login||'';
+    const file=Object.values(d.files)[0];
+    let parsed; try{ parsed=JSON.parse(file.content); }catch(e){ parsed=null; }
+    // Auto-migrate old array format
+    if(Array.isArray(parsed)){
+      parsed={ config:{ status:'online', status_message:'Sistema Online!', version:'v11.0', update_notes:'' }, keys:parsed };
+      await pushD(parsed);
+    }
+    if(!parsed||!parsed.config){ parsed={ config:{ status:'online', status_message:'Sistema Online!', version:'v11.0', update_notes:'' }, keys:[] }; }
+    DATA=parsed;
+    localStorage.setItem('dp_t',TOK); localStorage.setItem('dp_g',GIST); localStorage.setItem('dp_o',OWN);
+    document.getElementById('setup').classList.add('gone');
+    document.getElementById('app').classList.add('on');
+    renderAll(); toast('✅ Conectado com sucesso!');
+  }catch(e){
+    toast('❌ Token ou Gist ID inválido!',true);
+  }
+  setBtnLoad('btn-con','⚡ ENTRAR NO PAINEL',false);
+}
+
+// ══════════════════════
+//  CLEAR / LOGOUT
+// ══════════════════════
+function doClear(){
+  ['dp_t','dp_g','dp_o'].forEach(k=>localStorage.removeItem(k));
+  TOK=''; GIST=''; OWN='';
+  document.getElementById('setup').classList.remove('gone');
+  document.getElementById('app').classList.remove('on');
+  document.getElementById('i-token').value='';
+  document.getElementById('i-gist').value='';
+  document.getElementById('saved-ok').style.display='none';
+  document.getElementById('btn-clr').style.display='none';
+}
+
+// ══════════════════════
+//  PUSH DATA
+// ══════════════════════
+async function pushD(data){
+  const r=await fetch(`https://api.github.com/gists/${GIST}`,{
+    method:'PATCH',
+    headers:{Authorization:`token ${TOK}`,Accept:'application/vnd.github.v3+json','Content-Type':'application/json'},
+    body:JSON.stringify({files:{'keys.json':{content:JSON.stringify(data,null,2)}}})
+  });
+  if(!r.ok) throw new Error('Push failed');
+  DATA=data;
+}
+
+// ══════════════════════
+//  STATUS
+// ══════════════════════
+function selSt(s){
+  CUR_ST=s;
+  ['online','offline','updating','maintenance'].forEach(x=>document.getElementById('stb-'+x)?.classList.remove('cur'));
+  document.getElementById('stb-'+s)?.classList.add('cur');
+}
+async function saveStatus(){
+  const msg=document.getElementById('i-msg').value.trim();
+  const ver=document.getElementById('i-ver').value.trim();
+  const notes=document.getElementById('i-notes').value.trim();
+  setBtnLoad('btn-savest','⏳ SALVANDO...',true);
+  try{
+    const nd={...DATA,config:{...DATA.config,status:CUR_ST,status_message:msg,version:ver,update_notes:notes}};
+    await pushD(nd); renderAll(); toast('✅ Status salvo!');
+  }catch{ toast('❌ Erro ao salvar',true); }
+  setBtnLoad('btn-savest','💾 SALVAR CONFIGURAÇÕES',false);
+}
+
+// ══════════════════════
+//  KEY GENERATION
+// ══════════════════════
+function genKStr(){
+  const c='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const s=()=>Array.from({length:4},()=>c[Math.floor(Math.random()*c.length)]).join('');
+  return `DELTA-${s()}-${s()}-${s()}`;
+}
+async function doGen(){
+  const lbl=document.getElementById('i-label').value.trim();
+  const bnd=document.getElementById('i-bind').value.trim();
+  const now=Math.floor(Date.now()/1000);
+  const entry={
+    key:genKStr(), label:lbl||null, duration:SEL.label,
+    created:now, expires:SEL.secs>0?now+SEL.secs:null, bound_user:bnd||null
+  };
+  setBtnLoad('btn-gen','⏳ GERANDO...',true);
+  try{
+    await pushD({...DATA,keys:[...DATA.keys,entry]});
+    document.getElementById('i-label').value='';
+    document.getElementById('i-bind').value='';
+    renderAll(); toast('✅ Key gerada!');
+  }catch{ toast('❌ Erro ao gerar',true); }
+  setBtnLoad('btn-gen','⚡ GERAR KEY',false);
+}
+async function delKey(k){
+  if(!confirm('Deletar esta key?')) return;
+  try{
+    await pushD({...DATA,keys:DATA.keys.filter(x=>x.key!==k)});
+    renderAll(); toast('🗑 Key deletada!');
+  }catch{ toast('❌ Erro',true); }
+}
+async function bindKey(k,uid){
+  try{
+    await pushD({...DATA,keys:DATA.keys.map(x=>x.key===k?{...x,bound_user:uid||null}:x)});
+    renderAll(); toast(uid?'🔒 Key vinculada!':'🔓 Vínculo removido!');
+  }catch{ toast('❌ Erro',true); }
+}
+async function purgeExp(){
+  const now=Math.floor(Date.now()/1000);
+  try{
+    await pushD({...DATA,keys:DATA.keys.filter(k=>!k.expires||k.expires>now)});
+    renderAll(); toast('🗑 Expiradas removidas!');
+  }catch{ toast('❌ Erro',true); }
+}
+
+// ══════════════════════
+//  TIME
+// ══════════════════════
+function tLeft(exp){
+  if(!exp) return '♾ Vitalício';
+  const d=exp-Math.floor(Date.now()/1000);
+  if(d<=0) return 'Expirada';
+  if(d<3600) return `${Math.floor(d/60)}min`;
+  if(d<86400) return `${Math.floor(d/3600)}h restantes`;
+  return `${Math.floor(d/86400)}d restantes`;
+}
+function isExp(exp){ return exp&&Math.floor(Date.now()/1000)>exp; }
+
+// ══════════════════════
+//  RENDER
+// ══════════════════════
+function renderAll(){
+  const c=DATA.config;
+  const st=c.status||'online';
+  const icons={online:'🟢',offline:'🔴',updating:'🟡',maintenance:'🟣'};
+  const txts={online:'ONLINE',offline:'OFFLINE',updating:'ATUALIZANDO',maintenance:'MANUTENÇÃO'};
+
+  // Header
+  const dot=document.getElementById('hdr-dot');
+  dot.className='sdot '+st;
+  document.getElementById('hdr-st').textContent=txts[st]||'ONLINE';
+
+  // Big status card
+  const bc=document.getElementById('dash-big');
+  bc.className='big-st '+st;
+  document.getElementById('dash-ico').textContent=icons[st]||'🟢';
+  document.getElementById('dash-stxt').textContent=txts[st]||'ONLINE';
+  document.getElementById('dash-smsg').textContent=c.status_message||'';
+
+  // Stats
+  const now=Math.floor(Date.now()/1000);
+  const act=DATA.keys.filter(k=>!isExp(k.expires));
+  const exp=DATA.keys.filter(k=> isExp(k.expires));
+  const bnd=DATA.keys.filter(k=>k.bound_user);
+  document.getElementById('s-tot').textContent=DATA.keys.length;
+  document.getElementById('s-act').textContent=act.length;
+  document.getElementById('s-exp').textContent=exp.length;
+  document.getElementById('s-bnd').textContent=bnd.length;
+
+  // Info
+  document.getElementById('info-ver').textContent=c.version||'v11.0';
+  document.getElementById('info-total').textContent=DATA.keys.length;
+  const rawUrl=OWN?`https://gist.githubusercontent.com/${OWN}/${GIST}/raw/keys.json`:'–';
+  document.getElementById('raw-url').textContent=rawUrl;
+
+  // Status page
+  selSt(st); CUR_ST=st;
+  document.getElementById('i-msg').value=c.status_message||'';
+  document.getElementById('i-ver').value=c.version||'v11.0';
+  document.getElementById('i-notes').value=c.update_notes||'';
+
+  // Keys
+  document.getElementById('kcount').textContent=`(${DATA.keys.length})`;
+  const list=document.getElementById('klist');
+  if(!DATA.keys.length){
+    list.innerHTML='<div style="text-align:center;color:var(--sub);font-size:11px;padding:22px 0;letter-spacing:1px">Nenhuma key. Gere uma acima.</div>';
+    return;
+  }
+  const sorted=[...act,...exp];
+  list.innerHTML=sorted.map(k=>{
+    const ex=isExp(k.expires);
+    const tl=tLeft(k.expires);
+    const bid='b'+k.key.replace(/-/g,'');
+    return `
+    <div class="kr ${ex?'exp':''}">
+      <div class="kr-top">
+        <span class="ktext ${ex?'exp':''}">${k.key}</span>
+        <button class="btn sm" onclick="cpTxt('${k.key}')">📋</button>
+        <button class="btn sm r" onclick="delKey('${k.key}')">🗑</button>
+      </div>
+      <div class="kmeta">
+        ${k.label?`<span class="kb l">🏷 ${k.label}</span>`:''}
+        <span class="kb ${ex?'e':'t'}">${ex?'❌':'⏱'} ${tl}</span>
+        <span class="kb d">${k.duration||'—'}</span>
+        ${k.bound_user?`<span class="kb b">🔒 ID: ${k.bound_user}</span>`:`<span class="kb free">🔓 Livre</span>`}
+      </div>
+      <div class="bind-row">
+        <input type="text" id="${bid}" value="${k.bound_user||''}" placeholder="Roblox User ID para vincular...">
+        <button class="btn sm" onclick="bindKey('${k.key}',document.getElementById('${bid}').value.trim())">${k.bound_user?'🔄':'🔒'}</button>
+        ${k.bound_user?`<button class="btn sm r" onclick="bindKey('${k.key}','')">🔓</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════
+//  HELPERS
+// ══════════════════════
+function setBtnLoad(id,txt,on){
+  const b=document.getElementById(id); if(!b) return;
+  b.disabled=on;
+  b.innerHTML=on?`<span class="spin"></span> ${txt}`:txt;
+}
+
+// Auto-refresh time every minute
+setInterval(()=>{ if(OWN) renderAll(); },60000);
+</script>
+</body>
+</html>
+HTMLEOF
+echo "Done"
